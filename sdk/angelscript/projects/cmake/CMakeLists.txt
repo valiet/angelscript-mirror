@@ -116,8 +116,15 @@ endif()
 if(${ARCHFLAGS} MATCHES "^arm")
     enable_language(ASM)
     if(CMAKE_ASM_COMPILER_WORKS)
-        set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm.cpp ../../source/as_callfunc_arm_gcc.S)
-        set_property(SOURCE ../../source/as_callfunc_arm_gcc.S APPEND PROPERTY COMPILE_FLAGS " -Wa,-mimplicit-it=always")
+        # Begin Modification for the Vita Console
+        if(VITA)
+            set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm.cpp ../../source/as_callfunc_arm_vita.S)
+            set_property(SOURCE ../../source/as_callfunc_arm_vita.S APPEND PROPERTY COMPILE_FLAGS " -Wa,-mimplicit-it=always")
+        else()
+            set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm.cpp ../../source/as_callfunc_arm_gcc.S)
+            set_property(SOURCE ../../source/as_callfunc_arm_gcc.S APPEND PROPERTY COMPILE_FLAGS " -Wa,-mimplicit-it=always")
+        endif()
+        # End Modification for the Vita Console
     else()
         message(FATAL ERROR "ARM target requires a working assembler")
     endif()
@@ -161,6 +168,13 @@ target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -DANGELSCRIPT_EXP
 if(AS_NO_EXCEPTIONS)
 	target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE AS_NO_EXCEPTIONS)
 endif()
+
+# Begin Modification for the Vita Console
+if(VITA)
+    target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -DVITA -D__vita__ -DPSP2 -D__psp2__)
+    target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -ffast-math -mtune=cortex-a9 -mfpu=neon -ftree-vectorize)
+endif()
+# End Modification for the Vita Console
 
 # Fix x64 issues on Linux
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" AND UNIX AND NOT APPLE)
